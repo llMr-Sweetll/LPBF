@@ -1,0 +1,92 @@
+# Configuration parameters for LPBF-Optimizer
+
+# Material properties
+material_properties:
+  # Ti-6Al-4V properties
+  rho: 4430.0       # Density (kg/m^3)
+  cp: 526.3         # Specific heat capacity (J/kg·K)
+  k: 6.7            # Thermal conductivity (W/m·K)
+  eta: 0.35         # Laser absorption coefficient
+  r0: 0.05          # Laser beam radius (mm)
+  Hm: 286000.0      # Latent heat of melting (J/kg)
+  Ts: 1604.0        # Solidus temperature (K)
+  Tl: 1660.0        # Liquidus temperature (K)
+  E: 110.0          # Young's modulus (GPa)
+  nu: 0.34          # Poisson's ratio
+  alpha: 8.6e-6     # Thermal expansion coefficient (1/K)
+  sigma_y: 1100.0   # Yield strength (MPa)
+
+# Neural network model configuration
+model:
+  input_dim: 10      # Process parameters + spatial coordinates + time
+  output_dim: 3      # Residual stress, porosity, geometric accuracy
+  hidden_width: 512  # Width of hidden layers
+  hidden_depth: 5    # Number of hidden layers
+
+# Data configuration
+data:
+  raw_data_dir: "../data/raw"
+  processed_data_path: "../data/processed/lpbf_dataset.h5"
+  train_split: 0.8   # Fraction of data for training
+  val_split: 0.1     # Fraction of data for validation
+  test_split: 0.1    # Fraction of data for testing
+  
+# Training configuration
+training:
+  n_epochs: 500
+  batch_size: 64
+  optimizer:
+    type: "adam"
+    learning_rate: 0.001
+    weight_decay: 1.0e-5
+  scheduler:
+    type: "reducelronplateau"
+    factor: 0.5
+    patience: 20
+  lambda_heat: 0.1   # Weight for heat equation physics loss
+  lambda_stress: 0.1 # Weight for stress equation physics loss
+  clip_grad: true
+  clip_value: 1.0
+  checkpoint_freq: 10
+  plot_freq: 10
+  print_freq: 5
+  output_dir: "../data/models"
+
+# FEA configuration
+fea:
+  solver_type: "abaqus"
+  abaqus_path: "abaqus"
+  comsol_path: "comsol"
+  comsol_java_path: "/Applications/COMSOL55/Multiphysics/plugins/org.comsol.model.jarfile/model.jar"
+  template_path: "../data/templates/lpbf_template.inp"
+  output_dir: "../data/raw/fea_results"
+  n_cpus: 4
+  
+# Optimizer configuration
+optimizer:
+  algorithm: "nsga3"  # or "bayesopt"
+  output_dir: "../data/optimized"
+  
+  # Parameter bounds for optimization
+  param_bounds:
+    P: [150, 400]     # Laser power (W)
+    v: [100, 2000]    # Scan speed (mm/s)
+    h: [0.05, 0.15]   # Hatch spacing (mm)
+    theta: [0, 90]    # Scan angle (degrees)
+    l_island: [2, 10] # Island size (mm)
+    layer_thickness: [0.02, 0.06]  # Layer thickness (mm)
+  
+  # NSGA-III specific settings
+  pop_size: 100
+  n_gen: 100
+  n_partitions: 12
+  
+  # Objectives to optimize
+  objectives:
+    - "residual_stress"  # Minimize residual stress
+    - "porosity"         # Minimize porosity
+    - "geometric_accuracy"  # Maximize geometric accuracy (minimize deviation)
+  
+  # Bayesian optimization specific settings
+  n_trials: 50
+  seed: 42
