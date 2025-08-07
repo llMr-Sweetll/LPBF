@@ -24,7 +24,7 @@
 
 ---
 
-# **\<Project Name\> (Deprecated)**
+# **LPBF (Deprecated)**
 
 > **⚠️ This repository has been archived and is no longer maintained.**
 
